@@ -2,6 +2,10 @@
 # topic.py - Latent Semantic Indexing Model using Truncated SVD
 #
 
+# To do
+#
+# Error
+
 # Reference:
 #   https://www.kaggle.com/thebrownviking20/topic-modelling-with-spacy-and-scikit-learn
 
@@ -9,7 +13,7 @@
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import string
+import pdb, string
 import matplotlib.pyplot as plt
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer
@@ -21,43 +25,48 @@ from pylab import bone, pcolor, colorbar, plot, show, rcParams, savefig
 import warnings
 warnings.filterwarnings('ignore')
 
-
 import os
-print(os.listdir("../input"))
-
-# Plotly based imports for visualization
-from plotly import tools
-import plotly.plotly as py
-from plotly.offline import init_notebook_mode, iplot
-init_notebook_mode(connected=True)
-import plotly.graph_objs as go
-import plotly.figure_factory as ff
+given_dir = "/home/cloud/data/covid_19"
+print(os.listdir(given_dir))
 
 # spaCy based imports
 import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
 from spacy.lang.en import English
 
+EARLY_DEBUGGING = False
+DEBUGGING = True
+
 # Loading data
-wines = pd.read_csv('metadata.csv')
+wines = pd.read_csv(os.path.join(given_dir, 'metadata.csv'))
 wines.head()
 
 # Creating a spaCy object
 nlp = spacy.load('en_core_web_lg')
 
+if (EARLY_DEBUGGING):
+    pdb.set_trace()
 
-doc = nlp(wines["description"][3])
-spacy.displacy.render(doc, style='ent',jupyter=True)
+if (DEBUGGING):
+    pdb.set_trace()
+
+if "description" in wines.columns:
+    doc = nlp(wines["description"][3])
+else:
+    # To do
+    # How to make broad one
+    doc = nlp(wines['title'][3])
+
+# spacy.displacy.render(doc, style='ent')
 
 punctuations = string.punctuation
 stopwords = list(STOP_WORDS)
 
-
 review = str(" ".join([i.lemma_ for i in doc]))
 
 doc = nlp(review)
-spacy.displacy.render(doc, style='ent',jupyter=True)
 
+# spacy.displacy.render(doc, style='ent')
 
 # POS tagging
 for i in nlp(review):
@@ -73,11 +82,15 @@ def spacy_tokenizer(sentence):
     return mytokens
 
 tqdm.pandas()
-wines["processed_description"] = wines["description"].progress_apply(spacy_tokenizer)
+
+# Error
+# TypeError: object of type 'float' has no len()
+wines["abstract"] = wines["title"].progress_apply(spacy_tokenizer)
 
 
 # Creating a vectorizer
-vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english', lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
+vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
+    lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
 data_vectorized = vectorizer.fit_transform(wines["processed_description"])
 
 NUM_TOPICS = 10
@@ -114,13 +127,15 @@ print("LSI Model:")
 selected_topics(lsi, vectorizer)
 
 # Transforming an individual sentence
-text = spacy_tokenizer("Aromas include tropical fruit, broom, brimstone and dried herb. The palate isn't overly expressive, offering unripened apple, citrus and dried sage alongside brisk acidity.")
+text = spacy_tokenizer("Aromas include tropical fruit, \
+    broom, brimstone and dried herb. The palate isn't \
+    overly expressive, offering unripened apple, citrus and dried sage alongside brisk acidity.")
 x = lda.transform(vectorizer.transform([text]))[0]
 print(x)
 
 
 # Visualizing LDA results with pyLDAvis
-
+nd
 pyLDAvis.enable_notebook()
 dash = pyLDAvis.sklearn.prepare(lda, data_vectorized, vectorizer, mds='tsne')
 dash
