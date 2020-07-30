@@ -25,7 +25,7 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import os
 
 # (1) Start chatbot
-
+# She will receive a question and digest it to process
 
 # (2) Input of each paper
 
