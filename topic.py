@@ -36,10 +36,16 @@ from spacy.lang.en import English
 
 EARLY_DEBUGGING = False
 DEBUGGING = True
+EARLY_TESTING = False
+TESTING = True
+
+# ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+count_empty_title = 0
 
 # Loading data
 wines = pd.read_csv(os.path.join(given_dir, 'metadata.csv'))
-wines.head()
+print (wines.head())
+print (list(wines))
 
 # Creating a spaCy object
 nlp = spacy.load('en_core_web_lg')
@@ -47,56 +53,84 @@ nlp = spacy.load('en_core_web_lg')
 if (EARLY_DEBUGGING):
     pdb.set_trace()
 
-if (DEBUGGING):
+if (EARLY_DEBUGGING):
     pdb.set_trace()
-
-if "description" in wines.columns:
-    doc = nlp(wines["description"][3])
-else:
-    # To do
-    # How to make broad one
-    doc = nlp(wines['title'][3])
-
-# spacy.displacy.render(doc, style='ent')
 
 punctuations = string.punctuation
 stopwords = list(STOP_WORDS)
 
-review = str(" ".join([i.lemma_ for i in doc]))
+if (TESTING):
+    doc = nlp(wines['title'][3])
+    review = str(" ".join([i.lemma_ for i in doc]))
 
-doc = nlp(review)
+    # Why?
+    doc = nlp(review)
+    if (EARLY_TESTING):
+        print (doc)
 
-# spacy.displacy.render(doc, style='ent')
+    # spacy.displacy.render(doc, style='ent')
 
-# POS tagging
-for i in nlp(review):
-    print(i,"=>",i.pos_)
+    # POS taggingwine
+    # check NLP tool
+    # PROPN: Noun of proposition
+    # ADP: ?
+    for i in nlp(review):
+        print(i,"=>",i.pos_)
 
 # Parser for reviews
+#   clinical features culture proven mycoplasma pneumoniae infections king abdulaziz university hospital jeddah saudi arabia
 parser = English()
+# Intput:
+#   Clinical features of culture-proven Mycoplasma pneumoniae infections at King Abdulaziz University Hospital, Jeddah, Saudi Arabia
+# Output:
+#   clinical features culture proven mycoplasma pneumoniae infections king abdulaziz university hospital jeddah saudi arabia
 def spacy_tokenizer(sentence):
-    mytokens = parser(sentence)
-    mytokens = [ word.lemma_.lower().strip() if word.lemma_ != "-PRON-" else word.lower_ for word in mytokens ]
-    mytokens = [ word for word in mytokens if word not in stopwords and word not in punctuations ]
+    try:
+        mytokens = parser(sentence)
+    except Exception as e:
+        # print (e.args)
+        # print ("Sentence: %s".format(sentence))
+        # count_empty_title += 1
+        return None
+
+    try:
+        mytokens = [ word.lemma_.lower().strip()
+            if word.lemma_ != "-PRON-" else word.lower_ for word in mytokens ]
+    except Exception as e:
+        print (e.args)
+        pdb.set_trace()
+
+    try:
+        mytokens = [ word for word in mytokens
+            if word not in stopwords and word not in punctuations ]
+    except Exception as e:
+        print (e.args)
+        pdb.set_trace()
     mytokens = " ".join([i for i in mytokens])
+
+    if (EARLY_DEBUGGING):
+        pdb.set_trace()
+
     return mytokens
 
 tqdm.pandas()
 
 # Error
 # TypeError: object of type 'float' has no len()
-wines["abstract"] = wines["title"].progress_apply(spacy_tokenizer)
-
+wines["unknown_one"] = wines["title"].progress_apply(spacy_tokenizer)
 
 # Creating a vectorizer
 vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
     lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
-data_vectorized = vectorizer.fit_transform(wines["processed_description"])
 
+data_vectorized = vectorizer.fit_transform(wines["abstract"])
+
+# Why?
 NUM_TOPICS = 10
 
 # Latent Dirichlet Allocation Model
-lda = LatentDirichletAllocation(n_components=NUM_TOPICS, max_iter=10, learning_method='online',verbose=True)
+lda = LatentDirichletAllocation(n_components=NUM_TOPICS, max_iter=10,
+    learning_method='online',verbose=True)
 data_lda = lda.fit_transform(data_vectorized)
 
 # Non-Negative Matrix Factorization Model
@@ -135,7 +169,7 @@ print(x)
 
 
 # Visualizing LDA results with pyLDAvis
-nd
+
 pyLDAvis.enable_notebook()
 dash = pyLDAvis.sklearn.prepare(lda, data_vectorized, vectorizer, mds='tsne')
 dash
@@ -175,9 +209,17 @@ trace = go.Scattergl(
 data = [trace]
 iplot(data, filename='text-scatter-mode')
 
-
+# ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+count_empty_title = 0
 def spacy_bigram_tokenizer(phrase):
-    doc = parser(phrase) # create spacy object
+    try:
+        doc = parser(phrase) # create spacy object
+    except Exception as e:
+        print (e.args)
+        print ("Sentence: %s".format(sentence))
+        # count_empty_title += 1
+        return None
+
     token_not_noun = []
     notnoun_noun_list = []
     noun = ""
@@ -193,12 +235,20 @@ def spacy_bigram_tokenizer(phrase):
 
     return " ".join([i for i in notnoun_noun_list])
 
-bivectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english', lowercase=True, ngram_range=(1,2))
-bigram_vectorized = bivectorizer.fit_transform(wines["processed_description"])
+tqdm.pandas()
+
+# Error
+# TypeError: object of type 'float' has no len()
+wines["unknown_second"] = wines["title"].progress_apply(spacy_bigram_tokenizer)
+
+bivectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
+    lowercase=True, ngram_range=(1,2))
+bigram_vectorized = bivectorizer.fit_transform(wines["abstract"])
 
 ## LDA for bigram data
 
-bi_lda = LatentDirichletAllocation(n_components=NUM_TOPICS, max_iter=10, learning_method='online',verbose=True)
+bi_lda = LatentDirichletAllocation(n_components=NUM_TOPICS,
+    max_iter=10, learning_method='online',verbose=True)
 data_bi_lda = bi_lda.fit_transform(bigram_vectorized)
 
 ### Topics for bigram model
@@ -206,5 +256,6 @@ data_bi_lda = bi_lda.fit_transform(bigram_vectorized)
 print("Bi-LDA Model:")
 selected_topics(bi_lda, bivectorizer)
 
-bi_dash = pyLDAvis.sklearn.prepare(bi_lda, bigram_vectorized, bivectorizer, mds='tsne')
+bi_dash = pyLDAvis.sklearn.prepare(bi_lda, bigram_vectorized,
+    bivectorizer, mds='tsne')
 bi_dash
