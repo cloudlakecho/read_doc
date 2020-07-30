@@ -5,6 +5,9 @@
 # To do
 #
 # Error
+#   Some title are only numbers
+#   Progress bar implementation
+#
 
 # Reference:
 #   https://www.kaggle.com/thebrownviking20/topic-modelling-with-spacy-and-scikit-learn
