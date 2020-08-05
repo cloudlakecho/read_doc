@@ -53,6 +53,7 @@ def spacy_tokenizer(parser, sentence):
         # print (e.args)
         # print ("Sentence: %s".format(sentence))
         # count_empty_title += 1
+        pdb.set_trace()
         return None
 
     try:
@@ -88,12 +89,6 @@ def summarize_doc(input):
     # Creating a spaCy object
     nlp = spacy.load('en_core_web_lg')
 
-    if (EARLY_DEBUGGING):
-        pdb.set_trace()
-
-    if (EARLY_DEBUGGING):
-        pdb.set_trace()
-
     punctuations = string.punctuation
     stopwords = list(STOP_WORDS)
 
@@ -119,17 +114,18 @@ def summarize_doc(input):
     #   clinical features culture proven mycoplasma pneumoniae infections king abdulaziz university hospital jeddah saudi arabia
     parser = English()
 
-
     tqdm.pandas()
 
     # Error
-    # TypeError: object of type 'float' has no len()
-    # find another way to show progress
-    wines["unknown_one"] = wines["title"].progress_apply(spacy_tokenizer)
+    # One row by one row
+    wines["unknown_one"] = spacy_tokenizer(parser, wines["title"])
 
     # Creating a vectorizer
     vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
         lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
+
+    if (DEBUGGING):
+        pdb.set_trace()
 
     data_vectorized = vectorizer.fit_transform(wines["abstract"])
 
