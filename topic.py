@@ -46,14 +46,14 @@ TESTING = True
 #   Clinical features of culture-proven Mycoplasma pneumoniae infections at King Abdulaziz University Hospital, Jeddah, Saudi Arabia
 # Output:
 #   clinical features culture proven mycoplasma pneumoniae infections king abdulaziz university hospital jeddah saudi arabia
-def spacy_tokenizer(parser, sentence):
+def spacy_tokenizer(parser, sentence, stopwords, punctuations):
     try:
         mytokens = parser(sentence)
     except Exception as e:
         # print (e.args)
         # print ("Sentence: %s".format(sentence))
         # count_empty_title += 1
-        pdb.set_trace()
+        # pdb.set_trace()
         return None
 
     try:
@@ -79,6 +79,8 @@ def spacy_tokenizer(parser, sentence):
 
 def summarize_doc(input):
     wines = pd.read_csv(input)
+    wines['unknown_one'] = ""
+    wines['unknown_second'] = ""
     count_empty_title = 0
 
     # Loading data
@@ -116,9 +118,11 @@ def summarize_doc(input):
 
     tqdm.pandas()
 
-    # Error
+
     # One row by one row
-    wines["unknown_one"] = spacy_tokenizer(parser, wines["title"])
+    for i_dx, i in tqdm(enumerate(wines['title'])):
+        wines["unknown_one"][i_dx] = spacy_tokenizer(parser, i, stopwords
+        , punctuations)
 
     # Creating a vectorizer
     vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
