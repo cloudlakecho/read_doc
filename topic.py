@@ -77,6 +77,37 @@ def spacy_tokenizer(parser, sentence, stopwords, punctuations):
     return mytokens
 
 
+def spacy_bigram_tokenizer(phrase):
+    try:
+        doc = parser(phrase) # create spacy object
+    except Exception as e:
+        print (e.args)
+        print ("Sentence: %s".format(sentence))
+        # count_empty_title += 1
+        return None
+
+    token_not_noun = []
+    notnoun_noun_list = []
+    noun = ""
+
+    for item in doc:
+        if item.pos_ != "NOUN": # separate nouns and not nouns
+            token_not_noun.append(item.text)
+        if item.pos_ == "NOUN":
+            noun = item.text
+
+        for notnoun in token_not_noun:
+            notnoun_noun_list.append(notnoun + " " + noun)
+
+    return " ".join([i for i in notnoun_noun_list])
+
+
+# (3) Make summary of paper
+# paper title | total page | summary
+#
+# Comparing papers
+# Latent Semantic Indexing Model using Truncated SVD -> Longest common
+#   subsequence problem or Longest common substring problem
 def summarize_doc(input):
     wines = pd.read_csv(input)
     wines['unknown_one'] = ""
@@ -131,6 +162,8 @@ def summarize_doc(input):
     if (DEBUGGING):
         pdb.set_trace()
 
+    # Error
+    # ValueError: np.nan is an invalid document, expected byte or unicode string.
     data_vectorized = vectorizer.fit_transform(wines["abstract"])
 
     # Why?
@@ -219,35 +252,15 @@ def summarize_doc(input):
 
     # ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
     count_empty_title = 0
-    def spacy_bigram_tokenizer(phrase):
-        try:
-            doc = parser(phrase) # create spacy object
-        except Exception as e:
-            print (e.args)
-            print ("Sentence: %s".format(sentence))
-            # count_empty_title += 1
-            return None
 
-        token_not_noun = []
-        notnoun_noun_list = []
-        noun = ""
-
-        for item in doc:
-            if item.pos_ != "NOUN": # separate nouns and not nouns
-                token_not_noun.append(item.text)
-            if item.pos_ == "NOUN":
-                noun = item.text
-
-            for notnoun in token_not_noun:
-                notnoun_noun_list.append(notnoun + " " + noun)
-
-        return " ".join([i for i in notnoun_noun_list])
 
     tqdm.pandas()
 
     # Error
     # TypeError: object of type 'float' has no len()
-    wines["unknown_second"] = wines["title"].progress_apply(spacy_bigram_tokenizer)
+    for i_dx, i in tqdm(enumerate(wines['title'])):
+        wines["unknown_two"][i_dx] = spacy_bigram_tokenizer(parser, i, stopwords
+        , punctuations)
 
     bivectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
         lowercase=True, ngram_range=(1,2))
