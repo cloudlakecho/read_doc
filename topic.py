@@ -155,6 +155,9 @@ def summarize_doc(input):
         wines["unknown_one"][i_dx] = spacy_tokenizer(parser, i, stopwords
         , punctuations)
 
+    nan_rows = wines[wines.isnull().T.any().T]
+    wines = wines.drop(nan_rows)
+
     # Creating a vectorizer
     vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
         lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
@@ -164,6 +167,7 @@ def summarize_doc(input):
 
     # Error
     # ValueError: np.nan is an invalid document, expected byte or unicode string.
+
     data_vectorized = vectorizer.fit_transform(wines["abstract"])
 
     # Why?
