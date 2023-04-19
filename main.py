@@ -1,13 +1,23 @@
 
+# main.py - Make group of research papers
+#   (1) summerize each research papers (topic function)
+#   (2)
+#   (3)
+
 # This Python 3 environment comes with many helpful analytics libraries installed
 # It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
 # For example, here's several helpful packages to load
 
 # COVID-19 Open Research Dataset Challenge (CORD-19)
 # What has been published about information sharing and inter-sectoral collaboration?
-
+#
 # Cloud Cho in May 5, 2020
-
+#
+# Work?
+#
+# To do
+#    Groupping the document from
+#
 # Reference:
 #   Task: https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge/tasks?taskId=583
 
@@ -22,20 +32,46 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 # Input data files are available in the read-only "../input/" directory
 # For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
 
-import os
+import os, pdb, sys
+
+# Error spot
+#   pyldavis not able to installed - possibly Python version issue
+import topic
+
+
+EARLY_DEBUGGING = False
+DEBUGGING = True
+EARLY_TESTING = False
+TESTING = True
+
+# if summary already done (basically topic function)
+#   This file will exist
+FILE = "/home/cloud/data/covid_19/metadata.csv"
 
 # (1) Start chatbot
 # She will receive a question and digest it to process
 
 # (2) Input of each paper
 
-for dirname, _, filenames in os.walk('/kaggle/input'):
-    for filename in filenames:
-        # print(os.path.join(dirname, filename))
+# Latent Semantic Indexing Model using Truncated SVD
+if (not os.path.exists(FILE)):
+    topic()  # calling topic.py file
+
+# To do
+# where is the folder?
+if (os.path.exists('/kaggle/input')):
+    for dirname, _, filenames in os.walk('/kaggle/input'):
+        for filename in filenames:
+            # print(os.path.join(dirname, filename))
+            if (DEBUGGING):
+                pdb.set_trace()
 
 
 # (3) Make summary of paper
 # paper title | total page | summary
+df = pd.read_csv('hrdata.csv')
+pdb.set_trace()
+
 #
 # Comparing papers
 # Latent Semantic Indexing Model using Truncated SVD -> Longest common

@@ -3,6 +3,7 @@
 #
 
 # To do
+#   sci-kit learn installation
 #
 # Error
 #   Some title are only numbers
@@ -18,6 +19,7 @@ import pandas as pd
 from tqdm import tqdm
 import pdb, string
 import matplotlib.pyplot as plt
+import sklearn
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.manifold import TSNE
@@ -286,6 +288,7 @@ def summarize_doc(input):
     bi_dash
 
 
+# ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main():
     given_dir = "/home/cloud/data/covid_19"
     print(os.listdir(given_dir))
