@@ -1,6 +1,20 @@
 
 # topic.py - Latent Semantic Indexing Model using Truncated SVD
-#
+#     Singular Value Decomposition
+#     Anxp= Unxn Snxp VTpxp
+        #
+        # Where
+        # UTU = Inxn
+        # VTV = Ipxp  (i.e. U and V are orthogonal)
+        #
+        # Where the columns of U are the left singular vectors
+        # (gene coefficient vectors)
+        # S (the same dimensions as A) has singular values and is diagonal
+        # (mode amplitudes)
+        # and VT has rows that are the right singular vectors
+        # (expression level vectors).
+        # The SVD represents an expansion of the original data in
+        # a coordinate system where the covariance matrix is diagonal.
 
 # To do
 #   sci-kit learn installation
@@ -38,7 +52,7 @@ import spacy
 from spacy.lang.en.stop_words import STOP_WORDS
 from spacy.lang.en import English
 
-EARLY_DEBUGGING = False
+EARLY_DEBUGGING = True
 DEBUGGING = True
 EARLY_TESTING = False
 TESTING = True
@@ -73,9 +87,6 @@ def spacy_tokenizer(parser, sentence, stopwords, punctuations):
         pdb.set_trace()
     mytokens = " ".join([i for i in mytokens])
 
-    if (EARLY_DEBUGGING):
-        pdb.set_trace()
-
     return mytokens
 
 
@@ -104,24 +115,25 @@ def spacy_bigram_tokenizer(phrase):
     return " ".join([i for i in notnoun_noun_list])
 
 
+# +++++ +++++ +++++ +++++ +++++
 # (3) Make summary of paper
 # paper title | total page | summary
 #
 # Comparing papers
 # Latent Semantic Indexing Model using Truncated SVD -> Longest common
 #   subsequence problem or Longest common substring problem
-def summarize_doc(input):
+def summarize_doc(input, par):
     wines = pd.read_csv(input)
     wines['unknown_one'] = ""
     wines['unknown_second'] = ""
     count_empty_title = 0
 
     # Loading data
-
     print (wines.head())
     print (list(wines))
 
     # Creating a spaCy object
+    # Required to run $ python -m spacy download en_core_web_sm
     nlp = spacy.load('en_core_web_lg')
 
     punctuations = string.punctuation
@@ -151,33 +163,37 @@ def summarize_doc(input):
 
     tqdm.pandas()
 
-
     # One row by one row
-    for i_dx, i in tqdm(enumerate(wines['title'])):
+    for i_dx, i in tqdm(enumerate(wines['title']), desc='Reading meta data'):
         wines["unknown_one"][i_dx] = spacy_tokenizer(parser, i, stopwords
         , punctuations)
 
-    nan_rows = wines[wines.isnull().T.any().T]
-    wines = wines.drop(nan_rows)
+    # nan_rows = wines[wines.isnull().T.any().T]
+    #
+    # Looks like every row has NaN value, so skip this
+    #
+    # wines = wines.drop(nan_rows.index)
 
     # Creating a vectorizer
     vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
         lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
-
-    if (DEBUGGING):
-        pdb.set_trace()
-
-    # Error
-    # ValueError: np.nan is an invalid document, expected byte or unicode string.
-
+    nan_rows = wines[wines['abstract'].isnull()]
+    wines = wines.drop(nan_rows.index)
+    # <class 'scipy.sparse._csr.csr_matrix'>
+    # (Pdb) data_vectorized
+    # <107032x48341 sparse matrix of type '<class 'numpy.int64'>'
+	# with 8340068 stored elements in Compressed Sparse Row format>
     data_vectorized = vectorizer.fit_transform(wines["abstract"])
 
-    # Why?
-    NUM_TOPICS = 10
+    # Why specific number?
+    NUM_TOPICS = par['no of topic']
 
     # Latent Dirichlet Allocation Model
-    lda = LatentDirichletAllocation(n_components=NUM_TOPICS, max_iter=10,
+    # What is proper number of iteration?
+    lda = LatentDirichletAllocation(n_components=NUM_TOPICS,
+        max_iter=par['iteration'],
         learning_method='online',verbose=True)
+    # input total row by number of topic like 107032 by 10
     data_lda = lda.fit_transform(data_vectorized)
 
     # Non-Negative Matrix Factorization Model
@@ -188,15 +204,26 @@ def summarize_doc(input):
     lsi = TruncatedSVD(n_components=NUM_TOPICS)
     data_lsi = lsi.fit_transform(data_vectorized)
 
+    if (EARLY_DEBUGGING):
+        pdb.set_trace()
+
     # Functions for printing keywords for each topic
     def selected_topics(model, vectorizer, top_n=10):
         for idx, topic in enumerate(model.components_):
             print("Topic %d:" % (idx))
+            #
+            # Error spot
+            # AttributeError: 'CountVectorizer' object has no attribute 'get_feature_names'
+            #
             print([(vectorizer.get_feature_names()[i], topic[i])
                             for i in topic.argsort()[:-top_n - 1:-1]])
 
     # Keywords for topics clustered by Latent Dirichlet Allocation
     print("LDA Model:")
+    #
+    # Error spot
+    # AttributeError: 'CountVectorizer' object has no attribute 'get_feature_names'
+    #
     selected_topics(lda, vectorizer)
 
     # Keywords for topics clustered by Latent Semantic Indexing
@@ -207,20 +234,15 @@ def summarize_doc(input):
     print("LSI Model:")
     selected_topics(lsi, vectorizer)
 
-    # Transforming an individual sentence
-    text = spacy_tokenizer("Aromas include tropical fruit, \
-        broom, brimstone and dried herb. The palate isn't \
-        overly expressive, offering unripened apple, citrus and dried sage alongside brisk acidity.")
-    x = lda.transform(vectorizer.transform([text]))[0]
-    print(x)
+    # +++++ +++++
+    # Jupyter Notebook?
 
+    pdb.set_trace()
 
     # Visualizing LDA results with pyLDAvis
-
     pyLDAvis.enable_notebook()
     dash = pyLDAvis.sklearn.prepare(lda, data_vectorized, vectorizer, mds='tsne')
     dash
-
 
     # Visualizing LSI(SVD) scatterplot
     svd_2d = TruncatedSVD(n_components=2)
@@ -242,7 +264,6 @@ def summarize_doc(input):
     iplot(data, filename='scatter-mode')
 
     ## The text version of scatter plot looks messy but you can zoom it for great results
-
     trace = go.Scattergl(
         x = data_2d[:,0],
         y = data_2d[:,1],
@@ -259,14 +280,13 @@ def summarize_doc(input):
     # ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
     count_empty_title = 0
 
-
     tqdm.pandas()
 
     # Error
     # TypeError: object of type 'float' has no len()
     for i_dx, i in tqdm(enumerate(wines['title'])):
-        wines["unknown_two"][i_dx] = spacy_bigram_tokenizer(parser, i, stopwords
-        , punctuations)
+        wines["unknown_two"][i_dx] = spacy_bigram_tokenizer(parser, i,
+            stopwords, punctuations)
 
     bivectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
         lowercase=True, ngram_range=(1,2))
@@ -288,12 +308,41 @@ def summarize_doc(input):
     bi_dash
 
 
+# ----- ----- ----- -----
+# Transforming an individual sentence
+def unit_test(par):
+    # Why specific number?
+    NUM_TOPICS = par['no of topic']
+
+    # Latent Dirichlet Allocation Model
+    # What is proper number of iteration?
+    lda = LatentDirichletAllocation(n_components=NUM_TOPICS,
+        max_iter=par['iteration'],
+        learning_method='online',verbose=True)
+
+    #
+    # Error spot
+    # TypeError: spacy_tokenizer() missing 3 required positional arguments: 'sentence', 'stopwords', and 'punctuations'
+    #
+    text = spacy_tokenizer("Aromas include tropical fruit, \
+        broom, brimstone and dried herb. The palate isn't \
+        overly expressive, offering unripened apple, citrus and dried sage alongside brisk acidity.")
+    x = lda.transform(vectorizer.transform([text]))[0]
+    print(x)
+
+    if (EARLY_TESTING):
+        pdb.set_trace()
+
 # ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
 def main():
+    par = {'iteration': 2, 'no of topic': 10}
+
+    unit_test(par)
+
     given_dir = "/home/cloud/data/covid_19"
     print(os.listdir(given_dir))
     wines = os.path.join(given_dir, 'metadata.csv')
-    summarize_doc(wines)
+    summarize_doc(wines, par)
 
 
 if __name__ == '__main__':

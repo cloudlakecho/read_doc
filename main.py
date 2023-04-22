@@ -1,5 +1,5 @@
 
-# main.py - Make group of research papers
+# main.py - Make group of research papers: clustering
 #   (1) summerize each research papers (topic function)
 #   (2)
 #   (3)
@@ -33,10 +33,9 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 # For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
 
 import os, pdb, sys
-
-# Error spot
-#   pyldavis not able to installed - possibly Python version issue
+# pyldavis required Python 3.8 for Anaconda
 import topic
+
 
 
 EARLY_DEBUGGING = False
@@ -46,7 +45,8 @@ TESTING = True
 
 # if summary already done (basically topic function)
 #   This file will exist
-FILE = "/home/cloud/data/covid_19/metadata.csv"
+# FILE = "/home/cloud/data/covid_19/metadata.csv"
+FILE = "/home/cloud/computer_programming/python/china_virus/read_doc/result/hrdata.csv"
 
 # (1) Start chatbot
 # She will receive a question and digest it to process
@@ -55,7 +55,7 @@ FILE = "/home/cloud/data/covid_19/metadata.csv"
 
 # Latent Semantic Indexing Model using Truncated SVD
 if (not os.path.exists(FILE)):
-    topic()  # calling topic.py file
+    topic.main()  # calling topic.py file
 
 # To do
 # where is the folder?
@@ -69,7 +69,7 @@ if (os.path.exists('/kaggle/input')):
 
 # (3) Make summary of paper
 # paper title | total page | summary
-df = pd.read_csv('hrdata.csv')
+df = pd.read_csv(FILE)
 pdb.set_trace()
 
 #
