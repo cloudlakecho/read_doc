@@ -17,7 +17,7 @@
         # a coordinate system where the covariance matrix is diagonal.
 
 # To do
-#   sci-kit learn installation
+#   CountVectorizer vs. nlp
 #
 # Error
 #   Some title are only numbers
@@ -140,7 +140,7 @@ def summarize_doc(input, par):
     stopwords = list(STOP_WORDS)
 
     if (TESTING):
-        doc = nlp(wines['title'][3])
+        doc = nlp(wines['title'][3])  # word2vec: doc.vector will be (300, )
         review = str(" ".join([i.lemma_ for i in doc]))
 
         # Why?
@@ -175,6 +175,10 @@ def summarize_doc(input, par):
     # wines = wines.drop(nan_rows.index)
 
     # Creating a vectorizer
+    #
+    # To do
+    #    Find difference from nlp (word2vec) function
+    #
     vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
         lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
     nan_rows = wines[wines['abstract'].isnull()]
