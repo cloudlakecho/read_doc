@@ -13,10 +13,19 @@
 #
 # Cloud Cho in May 5, 2020
 #
+# How to run this code:
+#
 # Work?
+#
+# Error
+#   some in "topic.py"
 #
 # To do
 #    Groupping the document from
+#
+# Runtime environment
+#    read_doc_py_3_8 Anaconda
+#
 #
 # Reference:
 #   Task: https://www.kaggle.com/allen-institute-for-ai/CORD-19-research-challenge/tasks?taskId=583
@@ -55,7 +64,10 @@ FILE = "/home/cloud/computer_programming/python/china_virus/read_doc/result/hrda
 
 # Latent Semantic Indexing Model using Truncated SVD
 if (not os.path.exists(FILE)):
-    topic.main()  # calling topic.py file
+    par = {'iteration': 2, 'no of topic': 10}
+    given_dir = "/home/cloud/data/covid_19"
+    wines = os.path.join(given_dir, 'metadata.csv')
+    topic.summarize_doc(wines, par)  # calling topic.py file
 
 # To do
 # where is the folder?
@@ -73,10 +85,17 @@ df = pd.read_csv(FILE)
 pdb.set_trace()
 
 #
-# Comparing papers
-# Latent Semantic Indexing Model using Truncated SVD -> Longest common
+# Comparing papers -> put in a table
+# Method 1
+#   Latent Semantic Indexing Model using Truncated SVD --> Longest common
 #   subsequence problem or Longest common substring problem
-
+#
+# Method 2
+#   Keyword matching --> Latent Semantic Indexing Model using Truncated SVD -->
+#   Longest common subsequence problem or Longest common substring problem
+#
+# papser name | similar | not similar
+#   similarity by keyword matching count?
 
 # (4) Receive question
 # Make list of synomym of key word
