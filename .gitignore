@@ -1,0 +1,14 @@
+
+# Output file
+**.pyc
+
+# Compiled
+**.so
+
+# Document
+**.txt
+
+# Image
+**.png
+**.jpg
+**.jpeg
