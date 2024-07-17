@@ -22,6 +22,7 @@
 #
 # To do
 #    Groupping the document from
+#    Smaller input like 10 documents
 #
 # Runtime environment
 #    read_doc_py_3_8 Anaconda

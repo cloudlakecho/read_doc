@@ -20,11 +20,16 @@
 #
 #     - keyword matching --> vector dot of word vector --> neural network
 #
+#
 # To do
+#   Test with small input
+# 
 #   Please, add function in pyLDavis
 #   Exception reason and count
-# 
+#
 #   CountVectorizer vs. nlp
+#
+# Hold
 #   Progress bar implementation - need to know total length beforehand
 #
 #
@@ -147,6 +152,9 @@ def summarize_doc(input, par):
     # Loading data
     print (wines.head())
     print (list(wines))
+
+    # To do
+    # Cut the table to total row is 10.
 
     # Creating a spaCy object
     # Required to run $ python -m spacy download en_core_web_sm
