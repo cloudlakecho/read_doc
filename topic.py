@@ -23,7 +23,7 @@
 #
 # To do
 #   Test with small input
-# 
+#
 #   Please, add function in pyLDavis
 #   Exception reason and count
 #
@@ -51,7 +51,8 @@ from tqdm import tqdm
 import pdb, string
 import matplotlib.pyplot as plt
 import sklearn
-from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
+from sklearn.decomposition import NMF, LatentDirichletAllocation
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.manifold import TSNE
 import concurrent.futures
@@ -76,9 +77,11 @@ TESTING = True
 
 
 # Intput:
-#   Clinical features of culture-proven Mycoplasma pneumoniae infections at King Abdulaziz University Hospital, Jeddah, Saudi Arabia
+#   Clinical features of culture-proven Mycoplasma pneumoniae infections at
+#     King Abdulaziz University Hospital, Jeddah, Saudi Arabia
 # Output:
-#   clinical features culture proven mycoplasma pneumoniae infections king abdulaziz university hospital jeddah saudi arabia
+#   clinical features culture proven mycoplasma pneumoniae infections
+#     king abdulaziz university hospital jeddah saudi arabia
 def spacy_tokenizer(parser, sentence, stopwords, punctuations,
     count_empty_title=None):
     try:
@@ -207,40 +210,54 @@ def summarize_doc(input, par):
     # wines = wines.drop(nan_rows.index)
 
     # Creating a vectorizer
+    #   ref: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
     #
     # To do
+    #    parameter modification becasue only two tocken 
     #    Find difference from nlp (word2vec) function
     #
-    vectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
+    vectorizer = CountVectorizer(min_df=5, max_df=0.9,
+        stop_words='english',
         lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
     nan_rows = wines[wines['abstract'].isnull()]
     wines = wines.drop(nan_rows.index)
-    # <class 'scipy.sparse._csr.csr_matrix'>
-    # (Pdb) data_vectorized
-    # <107032x48341 sparse matrix of type '<class 'numpy.int64'>'
-	# with 8340068 stored elements in Compressed Sparse Row format>
-    #
-    # It looks like number of row by ...
-    data_vectorized = vectorizer.fit_transform(wines["abstract"])
 
+    # Convert a collection of text documents to a matrix of token counts
+    data_vectorized = vectorizer.fit_transform(wines["abstract"])
+    if (DEBUGGING):
+        print ("Token/Feature:")
+        print (vectorizer.get_feature_names_out())
+        #   visualize the matrix
+        print ("Token count:")
+        print (data_vectorized.toarray())
+
+    no_paper, no_token = data_vectorized.shape
     # Why specific number?
     NUM_TOPICS = par['no of topic']
 
-    # Latent Dirichlet Allocation Model
-    # What is proper number of iteration?
+    # Latent Dirichlet Allocation Model (unsupervised)
+    #   What is proper number of iteration?
     lda = LatentDirichletAllocation(n_components=NUM_TOPICS,
         max_iter=par['iteration'],
         learning_method='online',verbose=True)
-    # input total row by number of topic like 107032 by 10
+    # input total row (no of paper) by number of topic like 107032 by 10
+    #
+    # To Do
+    #   visualize the matrix
     data_lda = lda.fit_transform(data_vectorized)
 
-    # Non-Negative Matrix Factorization Model
+    # Non-Negative Matrix Factorization Model (unsupervised)
+    #   word by document -> word by top and top by document
+    #     ref: https://www.researchgate.net/figure/Conceptual-illustration-of-non-negative-matrix-factorization-NMF-decomposition-of-a_fig1_312157184
     nmf = NMF(n_components=NUM_TOPICS)
+    # It may be (topic by no of paper)
+    #   input total row (no of paper) by number of topic like 107032 by 10
     data_nmf = nmf.fit_transform(data_vectorized)
 
     # Latent Semantic Indexing Model using Truncated SVD
-    lsi = TruncatedSVD(n_components=NUM_TOPICS)
-    data_lsi = lsi.fit_transform(data_vectorized)
+    if (no_token >= NUM_TOPICS):
+        lsi = TruncatedSVD(n_components=NUM_TOPICS)
+        data_lsi = lsi.fit_transform(data_vectorized)
 
     # Functions for printing keywords for each topic
     def selected_topics(model, vectorizer, top_n=10):
@@ -260,11 +277,11 @@ def summarize_doc(input, par):
     print("LDA Model:")
     selected_topics(lda, vectorizer)
 
-    # Keywords for topics clustered by Latent Semantic Indexing
+    # Keywords for topics clustered by Non-Negative Matrix Factorization
     print("NMF Model:")
     selected_topics(nmf, vectorizer)
 
-    # Keywords for topics clustered by Non-Negative Matrix Factorization
+    # Keywords for topics clustered by Latent Semantic Indexing
     print("LSI Model:")
     selected_topics(lsi, vectorizer)
 

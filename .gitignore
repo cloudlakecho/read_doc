@@ -12,3 +12,7 @@
 **.png
 **.jpg
 **.jpeg
+
+# Virtual Environment
+.venv/
+
