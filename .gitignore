@@ -1,6 +1,7 @@
 
 # Output file
 **.pyc
+__pycache__
 
 # Compiled
 **.so
