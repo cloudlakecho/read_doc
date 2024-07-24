@@ -163,7 +163,7 @@ def most_command(args):
     parser = English()
     punctuations = string.punctuation
     stopwords = list(STOP_WORDS)
-    wines = dict()
+    wines = dict.fromkeys(["history", "history token"], list())
     count_empty_title = 0
 
     vectorizer = CountVectorizer(min_df=5, max_df=0.9,
@@ -172,19 +172,26 @@ def most_command(args):
 
     with open(args.in_file, 'r') as f_in:
         for idx, line in enumerate(f_in):
-            try:
-                wines["history"][idx], _ = topic.spacy_tokenizer(parser,
-                    line, stopwords,
-                    punctuations, count_empty_title)
-            except Exception as e:
-                print (e.args)
 
-        pdb.set_trace()
+            # pdb.set_trace()
 
-        # Convert a collection of text documents to a matrix of token counts
-        # To Do
-        #    convert "_io.TextIOWrapper" to
-        data_vectorized = vectorizer.fit_transform(f_in)
+            wines["history"].append(line)
+
+    for each in wines["history"]:
+        try:
+            wines["history token"][idx], _ = topic.spacy_tokenizer(parser,
+                each, stopwords,
+                punctuations, count_empty_title)
+        except Exception as e:
+            print (e.args)
+
+
+    # Convert a collection of text documents to a matrix of token counts
+    # To Do
+    #    convert "_io.TextIOWrapper" to
+    data_vectorized = vectorizer.fit_transform(wines["history"])
+
+    pdb.set_trace()
 
 
 def main(args):

@@ -11,6 +11,9 @@
      grep file in local computer
      find file and read from AWS
 
+  Work? - no
+
+
   Reference:
     Write: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/programming-with-python.html
 
@@ -19,21 +22,34 @@
 import botocore
 import boto3
 
-dynamodb = boto3.client('dynamodb')
 
+#
+# Error
+#   region missing
+#
+dynamodb = boto3.client('dynamodb')
+region = "us-west-1"
 table_name = "Face"
 file_name = "/home/cloud/Pictures/Untitled.jpg"
 read_option = "rb"
 #
 # To Do
 #   how to grep file, which we don't need to close it
-f_in = open(file_name, read_option)
+img_file = request.session.get(file_name)
+str_ = json.dumps(str(img_file))
+
+
+# Check existing tables
+db = session.resource('dynamodb', region_name="us-east-2")
+tables = list(db.tables.all())
+print(tables)
+
 
 # Test to check database is available
 try:
     response = dynamodb.put_item(
       TableName = table_name,
-      Item = {file_name : f_in}
+      Item = {file_name : str_}
     )
 except botocore.exceptions.ClientError as err:
     print('Error Code: {}'.format(err.response['Error']['Code']))
