@@ -151,10 +151,12 @@ def summarize_doc(input, par):
     wines['unknown_one'] = ""
     wines['unknown_second'] = ""
     count_empty_title = 0
+    lda, lsi, nmf = None, None, None
 
     # Loading data
-    print (wines.head())
-    print (list(wines))
+    if (DEBUGGING):
+        print (wines.head())
+        print (list(wines))
 
     # To do
     # Cut the table to total row is 10.
@@ -213,7 +215,7 @@ def summarize_doc(input, par):
     #   ref: https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html
     #
     # To do
-    #    parameter modification becasue only two tocken 
+    #    parameter modification becasue only two tocken
     #    Find difference from nlp (word2vec) function
     #
     vectorizer = CountVectorizer(min_df=5, max_df=0.9,
@@ -260,6 +262,9 @@ def summarize_doc(input, par):
         data_lsi = lsi.fit_transform(data_vectorized)
 
     # Functions for printing keywords for each topic
+    #
+    # To Do
+    #   what is "top_n" and "argsort"
     def selected_topics(model, vectorizer, top_n=10):
         for idx, topic in enumerate(model.components_):
             sckit_ver = sklearn.__version__.split('.')[0]
@@ -274,16 +279,22 @@ def summarize_doc(input, par):
                 sys.exit(1)
 
     # Keywords for topics clustered by Latent Dirichlet Allocation
-    print("LDA Model:")
-    selected_topics(lda, vectorizer)
+    if (lda != None):
+        print("LDA Model:")
+        selected_topics(lda, vectorizer)
 
     # Keywords for topics clustered by Non-Negative Matrix Factorization
-    print("NMF Model:")
-    selected_topics(nmf, vectorizer)
+    if (nmf != None):
+        print("NMF Model:")
+        selected_topics(nmf, vectorizer)
 
     # Keywords for topics clustered by Latent Semantic Indexing
-    print("LSI Model:")
-    selected_topics(lsi, vectorizer)
+    if (lsi != None):
+        print("LSI Model:")
+        selected_topics(lsi, vectorizer)
+
+    if (DEBUGGING):
+        pdb.set_trace()
 
     # +++++ +++++
     # Jupyter Notebook? - yes
@@ -293,6 +304,10 @@ def summarize_doc(input, par):
     # To do
     #    Check if in Jupyter Notebook by file type of this code
     #
+    # out_file = os.path.basename(in_file)
+    # file_name = os.path.splitext(out_file)
+    # dir = os.path.dirname(in_file)
+    #
     #     Traceback (most recent call last):
     #   File "main.py", line 67, in <module>
     #     topic.summarize_doc(wines, par)  # calling topic.py file
@@ -301,71 +316,78 @@ def summarize_doc(input, par):
     #   File "/home/cloud/anaconda3/envs/read_doc_py_3_8/lib/python3.8/site-packages/pyLDAvis/_display.py", line 298, in enable_notebook
     #     raise ImportError('This feature requires IPython 1.0+')
     # ImportError: This feature requires IPython 1.0+
+    _, file_type = os.path.basename(input).split('.')
+    if (file_type == "ipynb"):
+        pyLDAvis.enable_notebook()
+        dash = pyLDAvis.sklearn.prepare(lda, data_vectorized,
+            vectorizer,
+            mds='tsne')
+        dash
 
-    pyLDAvis.enable_notebook()
-    dash = pyLDAvis.sklearn.prepare(lda, data_vectorized, vectorizer, mds='tsne')
-    dash
+        # Visualizing LSI(SVD) scatterplot
+        svd_2d = TruncatedSVD(n_components=2)
+        data_2d = svd_2d.fit_transform(data_vectorized)
 
-    # Visualizing LSI(SVD) scatterplot
-    svd_2d = TruncatedSVD(n_components=2)
-    data_2d = svd_2d.fit_transform(data_vectorized)
+        trace = go.Scattergl(
+            x = data_2d[:,0],
+            y = data_2d[:,1],
+            mode = 'markers',
+            marker = dict(
+                color = '#FFBAD2',
+                line = dict(width = 1)
+            ),
+            text = vectorizer.get_feature_names(),
+            hovertext = vectorizer.get_feature_names(),
+            hoverinfo = 'text'
+        )
+        data = [trace]
+        iplot(data, filename='scatter-mode')
 
-    trace = go.Scattergl(
-        x = data_2d[:,0],
-        y = data_2d[:,1],
-        mode = 'markers',
-        marker = dict(
-            color = '#FFBAD2',
-            line = dict(width = 1)
-        ),
-        text = vectorizer.get_feature_names(),
-        hovertext = vectorizer.get_feature_names(),
-        hoverinfo = 'text'
-    )
-    data = [trace]
-    iplot(data, filename='scatter-mode')
+        ## The text version of scatter plot looks messy but you can
+        ##   zoom it for great results
+        trace = go.Scattergl(
+            x = data_2d[:,0],
+            y = data_2d[:,1],
+            mode = 'text',
+            marker = dict(
+                color = '#FFBAD2',
+                line = dict(width = 1)
+            ),
+            text = vectorizer.get_feature_names()
+        )
+        data = [trace]
+        iplot(data, filename='text-scatter-mode')
 
-    ## The text version of scatter plot looks messy but you can zoom it for great results
-    trace = go.Scattergl(
-        x = data_2d[:,0],
-        y = data_2d[:,1],
-        mode = 'text',
-        marker = dict(
-            color = '#FFBAD2',
-            line = dict(width = 1)
-        ),
-        text = vectorizer.get_feature_names()
-    )
-    data = [trace]
-    iplot(data, filename='text-scatter-mode')
+        # ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
+        count_empty_title = 0
 
-    # ----- ----- ----- ----- ----- ----- ----- ----- ----- -----
-    count_empty_title = 0
+        tqdm.pandas()
 
-    tqdm.pandas()
+        for i_dx, i in tqdm(enumerate(wines['title'])):
+            wines["unknown_two"][i_dx], _ = spacy_bigram_tokenizer(parser, i,
+                stopwords, punctuations, count_empty_title)
 
-    for i_dx, i in tqdm(enumerate(wines['title'])):
-        wines["unknown_two"][i_dx], _ = spacy_bigram_tokenizer(parser, i,
-            stopwords, punctuations, count_empty_title)
+        # Count token like [1, 2, 3]
+        #   name could be printed out ['car', 'driver', 'wheel']
+        #   "get feature names" function
+        bivectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
+            lowercase=True, ngram_range=(1,2))
+        bigram_vectorized = bivectorizer.fit_transform(wines["abstract"])
 
-    bivectorizer = CountVectorizer(min_df=5, max_df=0.9, stop_words='english',
-        lowercase=True, ngram_range=(1,2))
-    bigram_vectorized = bivectorizer.fit_transform(wines["abstract"])
+        ## LDA for bigram data
 
-    ## LDA for bigram data
+        bi_lda = LatentDirichletAllocation(n_components=NUM_TOPICS,
+            max_iter=10, learning_method='online',verbose=True)
+        data_bi_lda = bi_lda.fit_transform(bigram_vectorized)
 
-    bi_lda = LatentDirichletAllocation(n_components=NUM_TOPICS,
-        max_iter=10, learning_method='online',verbose=True)
-    data_bi_lda = bi_lda.fit_transform(bigram_vectorized)
+        ### Topics for bigram model
 
-    ### Topics for bigram model
+        print("Bi-LDA Model:")
+        selected_topics(bi_lda, bivectorizer)
 
-    print("Bi-LDA Model:")
-    selected_topics(bi_lda, bivectorizer)
-
-    bi_dash = pyLDAvis.sklearn.prepare(bi_lda, bigram_vectorized,
-        bivectorizer, mds='tsne')
-    bi_dash
+        bi_dash = pyLDAvis.sklearn.prepare(bi_lda, bigram_vectorized,
+            bivectorizer, mds='tsne')
+        bi_dash
 
 
 # ----- ----- ----- -----
