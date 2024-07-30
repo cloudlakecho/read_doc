@@ -76,10 +76,10 @@ EARLY_TESTING = False
 TESTING = True
 
 
-# Intput:
+# Intput (strings):
 #   Clinical features of culture-proven Mycoplasma pneumoniae infections at
 #     King Abdulaziz University Hospital, Jeddah, Saudi Arabia
-# Output:
+# Output (strings not one group of words):
 #   clinical features culture proven mycoplasma pneumoniae infections
 #     king abdulaziz university hospital jeddah saudi arabia
 def spacy_tokenizer(parser, sentence, stopwords, punctuations,
@@ -249,7 +249,7 @@ def summarize_doc(input, par):
     data_lda = lda.fit_transform(data_vectorized)
 
     # Non-Negative Matrix Factorization Model (unsupervised)
-    #   word by document -> word by top and top by document
+    #   word by document -> word by topic and topic by document
     #     ref: https://www.researchgate.net/figure/Conceptual-illustration-of-non-negative-matrix-factorization-NMF-decomposition-of-a_fig1_312157184
     nmf = NMF(n_components=NUM_TOPICS)
     # It may be (topic by no of paper)

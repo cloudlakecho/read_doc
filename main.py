@@ -31,7 +31,7 @@
 #    Inference with new document
 #      How to use weight from LDA, LSI, NMF?
 #      Abnormal - XGBoost, Encoder Decoder
-#    Groupping the document
+#    Groupping the document - using Gaussian peaks by histogram?
 #
 #    find data from Keggle
 #
@@ -54,10 +54,12 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 # For example, running this (by clicking run or pressing Shift+Enter) will list all files under the input directory
 
 import argparse, os, pdb, sys
+import math, random
 import string
 
 # pyldavis required Python 3.8 for Anaconda
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import NMF, LatentDirichletAllocation
 from spacy.lang.en import English
 from spacy.lang.en.stop_words import STOP_WORDS
 import topic
@@ -75,6 +77,7 @@ TESTING = True
 # This is result of file reading function of this code
 FILE = "/home/cloud/computer_programming/python/china_virus/read_doc/result/hrdata.csv"
 KEGGLE_FOLDER = "/keggle/input"
+NUM_TOPICS = 10
 
 
 def getting_arg():
@@ -166,6 +169,7 @@ def most_command(args):
     wines = dict.fromkeys(["history", "history token"], list())
     count_empty_title = 0
 
+    sample_size = 10
     vectorizer = CountVectorizer(min_df=5, max_df=0.9,
         stop_words='english',
         lowercase=True, token_pattern='[a-zA-Z\-][a-zA-Z\-]{2,}')
@@ -189,7 +193,22 @@ def most_command(args):
     # Convert a collection of text documents to a matrix of token counts
     # To Do
     #    convert "_io.TextIOWrapper" to
-    data_vectorized = vectorizer.fit_transform(wines["history"])
+    data_vectorized = vectorizer.fit_transform(wines["history token"])
+    no_command, no_unique_token = data_vectorized.shape
+    if (DEBUGGING):
+        print ("Token/Feature:")
+        print (vectorizer.get_feature_names_out())
+        #   visualize the matrix
+        select = random.sample( list(range(no_unique_token)), sample_size )
+        print ("Token count:")
+        readable = data_vectorized.toarray()
+        print (readable[select])
+
+    if (no_unique_token >= NUM_TOPICS):
+        # Non-Negative Matrix Factorization Model (unsupervised)
+        nmf = NMF(n_components=NUM_TOPICS)
+        # _ by number of topic
+        data_nmf = nmf.fit_transform(data_vectorized)
 
     pdb.set_trace()
 
