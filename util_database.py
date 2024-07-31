@@ -6,6 +6,7 @@
 
   Cloud Cho from July 17, 2024
 
+
   To do
      log in the AWS account to access DynamoDB
      grep file in local computer
@@ -13,25 +14,41 @@
 
   Work? - no
 
+  Runtime enivronment
+     set ~/.aws/config
+     set ~/.aws/credentials
+     use "Config" object at "client" function
 
   Reference:
     Write: https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/programming-with-python.html
-
+    Runtime setting: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html
 """
 
 import botocore
 import boto3
+from botocore.config import Config
 
 
 #
 # Error
 #   region missing
 #
-dynamodb = boto3.client('dynamodb')
 region = "us-west-1"
 table_name = "Face"
 file_name = "/home/cloud/Pictures/Untitled.jpg"
 read_option = "rb"
+
+my_config = Config(
+    region_name = region,
+    signature_version = 'v4',
+    retries = {
+        'max_attempts': 10,
+        'mode': 'standard'
+    }
+)
+
+dynamodb = boto3.client('dynamodb', config=my_config)
+
 #
 # To Do
 #   how to grep file, which we don't need to close it

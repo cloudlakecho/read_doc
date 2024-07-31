@@ -1,14 +1,14 @@
 
 # main.py - two functions
 #   Make group of research papers: clustering
-#   (1) summerize each research papers (topic function)
-#   (2)
-#   (3)
+#     (1) summerize each research papers (topic function)
+#     (2)
+#     (3)
 #
-#   Find most used comand from computer command "history"
-#   (1) extract words in each command
-#   (2) count them
-#   (3) find most common word
+#   Find most used comand from computer command "history" or any machine log
+#     (1) extract words in each command
+#     (2) count them
+#     (3) find most common word
 
 # This Python 3 environment comes with many helpful analytics libraries installed
 # It is defined by the kaggle/python Docker image: https://github.com/kaggle/docker-python
@@ -63,7 +63,6 @@ from sklearn.decomposition import NMF, LatentDirichletAllocation
 from spacy.lang.en import English
 from spacy.lang.en.stop_words import STOP_WORDS
 import topic
-
 
 
 EARLY_DEBUGGING = False
@@ -203,6 +202,10 @@ def most_command(args):
         print ("Token count:")
         readable = data_vectorized.toarray()
         print (readable[select])
+        most_freq = readable.sum(axis=0)  # column wise sum
+        np.argsort(most_freq)  # find higer summations - index not value
+
+
 
     if (no_unique_token >= NUM_TOPICS):
         # Non-Negative Matrix Factorization Model (unsupervised)
@@ -210,7 +213,8 @@ def most_command(args):
         # _ by number of topic
         data_nmf = nmf.fit_transform(data_vectorized)
 
-    pdb.set_trace()
+    if (DEBUGGING):
+        pdb.set_trace()
 
 
 def main(args):
